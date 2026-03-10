@@ -49,7 +49,7 @@ fn main() -> EdgenResult {
 }
 EOF
 
-RUN cargo build --manifest-path /tmp/edgen-launcher/Cargo.toml --release --bin edgen
+RUN cargo +"${RUST_VERSION}" build --manifest-path /tmp/edgen-launcher/Cargo.toml --release --bin edgen
 
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS runtime
 
