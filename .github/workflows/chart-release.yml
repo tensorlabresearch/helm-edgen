@@ -90,6 +90,7 @@ jobs:
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          mkdir -p .cr-index
           cr index \
             --owner tensorlabresearch \
             --git-repo helm-edgen \
