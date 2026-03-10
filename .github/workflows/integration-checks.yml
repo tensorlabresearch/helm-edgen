@@ -6,7 +6,7 @@ on:
       chart_version:
         description: "Chart version to install from OCI and Pages"
         required: true
-        default: "0.1.5"
+        default: "0.1.6"
 
 permissions:
   contents: read

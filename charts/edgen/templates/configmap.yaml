@@ -25,4 +25,4 @@ data:
     gpu_policy: !always_device
       overflow_to_cpu: {{ .Values.edgen.config.gpuPolicy.overflowToCpu }}
     {{- end }}
-    max_request_size: {{ .Values.edgen.config.maxRequestSize }}
+    max_request_size: {{ int .Values.edgen.config.maxRequestSize }}
