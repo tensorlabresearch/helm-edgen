@@ -41,6 +41,18 @@ jobs:
             ghcr.io/tensorlabresearch/edgen:${{ github.ref_name }}
             ghcr.io/tensorlabresearch/edgen:sha-${{ github.sha }}
 
+      - name: Ensure GHCR image package is public
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            /orgs/tensorlabresearch/packages/container/edgen/visibility \
+            -f visibility=public
+
       - name: Scan image (Trivy)
         id: trivy
         if: steps.build.outcome == 'success'
