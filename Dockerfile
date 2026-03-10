@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
     pkg-config \
+    libglib2.0-dev \
     libssl-dev \
     clang \
     git \

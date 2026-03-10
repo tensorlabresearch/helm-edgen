@@ -58,50 +58,86 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
+      - name: Install chart-releaser
+        uses: helm/chart-releaser-action@v1.7.0
+        with:
+          install_only: true
+
+      - name: Configure git user for gh-pages index updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Package chart
+        run: |
+          rm -rf .cr-release-packages
+          mkdir -p .cr-release-packages
+          cr package charts/edgen --package-path .cr-release-packages
+
+      - name: Upload chart release assets
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cr upload \
+            --owner tensorlabresearch \
+            --git-repo helm-edgen \
+            --token "${CR_TOKEN}" \
+            --skip-existing \
+            --commit "$(git rev-parse HEAD)" \
+            --pages-branch gh-pages
+
+      - name: Update gh-pages index
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cr index \
+            --owner tensorlabresearch \
+            --git-repo helm-edgen \
+            --token "${CR_TOKEN}" \
+            --push \
+            --pages-branch gh-pages
+
+      - name: Resolve chart metadata
+        id: chart
+        run: |
+          chart_name="edgen"
+          chart_version="$(awk '/^version:/ {print $2; exit}' charts/edgen/Chart.yaml)"
+          chart_package=".cr-release-packages/${chart_name}-${chart_version}.tgz"
+          echo "name=${chart_name}" >> "$GITHUB_OUTPUT"
+          echo "version=${chart_version}" >> "$GITHUB_OUTPUT"
+          echo "package=${chart_package}" >> "$GITHUB_OUTPUT"
+
       - name: Login to GHCR for OCI chart push
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
             --username "${{ github.actor }}" \
             --password-stdin
 
-      - name: Run chart releaser (GitHub Releases + gh-pages index)
-        id: cr
-        uses: helm/chart-releaser-action@v1.7.0
-        with:
-          charts_dir: charts
-          skip_existing: true
-          skip_packaging: false
-          skip_upload: false
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Push changed charts to GHCR OCI
-        if: steps.cr.outputs.changed_charts != ''
+      - name: Push chart to GHCR OCI (skip when version already exists)
+        id: oci
         run: |
           set -euo pipefail
-          changed="${{ steps.cr.outputs.changed_charts }}"
-          IFS=',' read -r -a charts <<< "$changed"
+          chart_ref="oci://ghcr.io/tensorlabresearch/charts/${{ steps.chart.outputs.name }}"
+          chart_version="${{ steps.chart.outputs.version }}"
+          chart_package="${{ steps.chart.outputs.package }}"
 
-          for chart in "${charts[@]}"; do
-            chart="${chart// /}"
-            version="$(awk '/^version:/ {print $2; exit}' "charts/${chart}/Chart.yaml")"
-            package=".cr-release-packages/${chart}-${version}.tgz"
+          if helm show chart "${chart_ref}" --version "${chart_version}" >/dev/null 2>&1; then
+            echo "OCI chart ${chart_ref}:${chart_version} already exists; skipping push."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-            if [ ! -f "$package" ]; then
-              helm package "charts/${chart}" --destination .cr-release-packages
-            fi
-
-            helm push "$package" oci://ghcr.io/tensorlabresearch/charts
-            echo "Pushed ${chart}:${version} to GHCR OCI"
-          done
+          helm push "${chart_package}" oci://ghcr.io/tensorlabresearch/charts
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Release summary
         run: |
           {
             echo "### Chart Release"
             echo ""
-            echo "- Changed charts: \`${{ steps.cr.outputs.changed_charts }}\`"
-            echo "- Version: \`${{ steps.cr.outputs.chart_version }}\`"
+            echo "- Chart: \`${{ steps.chart.outputs.name }}\`"
+            echo "- Version: \`${{ steps.chart.outputs.version }}\`"
+            echo "- OCI pushed this run: \`${{ steps.oci.outputs.pushed }}\`"
             echo "- OCI base: \`oci://ghcr.io/tensorlabresearch/charts\`"
             echo "- Pages repo: \`https://tensorlabresearch.github.io/helm-edgen\`"
           } >> "$GITHUB_STEP_SUMMARY"
