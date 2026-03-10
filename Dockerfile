@@ -33,7 +33,7 @@ fn main() -> EdgenResult {
 }
 EOF
 
-RUN cargo +"${RUST_VERSION}" build --manifest-path /src/Cargo.toml --release \
+RUN cargo build --manifest-path /src/Cargo.toml --release \
     -p edgen_server --bin edgen --features llama_cuda,whisper_cuda --locked
 
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS runtime
