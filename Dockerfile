@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
     libglib2.0-dev \
+    libgtk-3-dev \
     libssl-dev \
     clang \
     git \
@@ -33,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd --create-home --uid 1000 app \
+RUN useradd --create-home app \
     && mkdir -p /config /models /home/app \
     && chown -R app:app /config /models /home/app
 
