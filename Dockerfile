@@ -9,13 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
     pkg-config \
-    libglib2.0-dev \
-    libgtk-3-dev \
-    libsoup2.4-dev \
-    libwebkit2gtk-4.0-dev \
-    libayatana-appindicator3-dev \
-    librsvg2-dev \
-    libxdo-dev \
     libssl-dev \
     clang \
     git \
@@ -30,7 +23,33 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 WORKDIR /src
 
 RUN git clone --depth 1 https://github.com/edgenai/edgen.git .
-RUN cargo build --release -p edgen --features no_gui,llama_cuda,whisper_cuda
+RUN mkdir -p /tmp/edgen-launcher/src \
+    && cat > /tmp/edgen-launcher/Cargo.toml <<'EOF'
+[package]
+name = "edgen-launcher"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "edgen"
+path = "src/main.rs"
+
+[dependencies]
+once_cell = "1.21.3"
+edgen_server = { path = "/src/crates/edgen_server", features = ["llama_cuda", "whisper_cuda"] }
+EOF
+
+RUN cat > /tmp/edgen-launcher/src/main.rs <<'EOF'
+use once_cell::sync::Lazy;
+use edgen_server::{cli, start, EdgenResult};
+
+fn main() -> EdgenResult {
+    Lazy::force(&cli::PARSED_COMMANDS);
+    start(&cli::PARSED_COMMANDS)
+}
+EOF
+
+RUN cargo build --manifest-path /tmp/edgen-launcher/Cargo.toml --release --bin edgen
 
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS runtime
 
@@ -43,7 +62,7 @@ RUN useradd --create-home app \
     && mkdir -p /config /models /home/app \
     && chown -R app:app /config /models /home/app
 
-COPY --from=builder /src/target/release/edgen /usr/local/bin/edgen
+COPY --from=builder /tmp/edgen-launcher/target/release/edgen /usr/local/bin/edgen
 
 USER app
 WORKDIR /home/app
