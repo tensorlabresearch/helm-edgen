@@ -1,12 +1,12 @@
 # helm-edgen
 
-Helm chart and CUDA image pipeline for Edgen in the `tensorlabresearch` organization.
+Helm chart wrapper for the [Edgen project](https://github.com/edgenai/edgen), maintained in the `tensorlabresearch` organization.
 
 ## What this repo publishes
 
 - OCI chart (primary): `oci://ghcr.io/tensorlabresearch/charts/edgen`
 - GitHub Pages chart repo (mirror): `https://tensorlabresearch.github.io/helm-edgen`
-- Container image: `ghcr.io/tensorlabresearch/edgen`
+- Container image: `docker.io/mechaminds/edgen`
 
 ## Install
 
@@ -63,7 +63,7 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 
 ## Release model
 
-- Push a semver Git tag like `v0.1.0` to build/publish the CUDA image to GHCR.
+- Push a semver Git tag like `v0.1.0` to build/publish the CUDA image to Docker Hub.
 - Merge chart changes to `main` with bumped `charts/edgen/Chart.yaml` version.
 - `chart-release.yml` will lint/template, publish index/releases to `gh-pages`, and push changed chart packages to GHCR OCI.
 
@@ -72,4 +72,4 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 - Default chart values assume CUDA and request `nvidia.com/gpu: 1`.
 - Chart renders `edgen.conf.yaml` from values and mounts it in the container.
 - Model files can be preloaded via init container and/or auto-downloaded by Edgen at runtime.
-- If OCI pulls return `403`, set GHCR package visibility to public for `edgen` and `charts/edgen` in the `tensorlabresearch` org packages settings.
+- If OCI chart pulls return `403`, set GHCR package visibility to public for `charts/edgen` in the `tensorlabresearch` org packages settings.

@@ -151,18 +151,6 @@ jobs:
             echo "Skipping OCI chart package visibility update; configure package visibility manually in GHCR."
           fi
 
-      - name: Ensure GHCR image package is public
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if ! gh api \
-            --method PATCH \
-            -H "Accept: application/vnd.github+json" \
-            /orgs/tensorlabresearch/packages/container/edgen/visibility \
-            -f visibility=public; then
-            echo "Skipping image package visibility update; configure package visibility manually in GHCR."
-          fi
-
       - name: Release summary
         run: |
           {
