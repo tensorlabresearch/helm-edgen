@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
   security-events: write
 
 jobs:
@@ -21,11 +22,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
         id: build
@@ -36,8 +38,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            docker.io/mechaminds/edgen:${{ github.ref_name }}
-            docker.io/mechaminds/edgen:sha-${{ github.sha }}
+            ghcr.io/tensorlabresearch/edgen:${{ github.ref_name }}
+            ghcr.io/tensorlabresearch/edgen:sha-${{ github.sha }}
 
       - name: Scan image (Trivy)
         id: trivy
@@ -45,7 +47,7 @@ jobs:
         continue-on-error: true
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: docker.io/mechaminds/edgen:${{ github.ref_name }}
+          image-ref: ghcr.io/tensorlabresearch/edgen:${{ github.ref_name }}
           format: sarif
           output: trivy-results.sarif
           vuln-type: os,library
@@ -62,6 +64,6 @@ jobs:
           {
             echo "### Image Published"
             echo ""
-            echo "- Image: \`docker.io/mechaminds/edgen:${{ github.ref_name }}\`"
+            echo "- Image: \`ghcr.io/tensorlabresearch/edgen:${{ github.ref_name }}\`"
             echo "- Digest: \`${{ steps.build.outputs.digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

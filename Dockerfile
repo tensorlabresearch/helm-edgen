@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS builder
+FROM ubuntu:22.04 AS builder
 
 ARG EDGEN_REF=main
 
@@ -37,9 +37,9 @@ RUN EDGEN_TOOLCHAIN="$(awk -F'\"' '/^channel = / { print $2; exit }' rust-toolch
     && test -n "${EDGEN_TOOLCHAIN}" \
     && rustup toolchain install "${EDGEN_TOOLCHAIN}" --profile minimal \
     && cargo +"${EDGEN_TOOLCHAIN}" build --manifest-path /src/Cargo.toml --release \
-        -p edgen_server --bin edgen --features llama_cuda,whisper_cuda --locked
+        -p edgen_server --bin edgen --locked
 
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS runtime
+FROM ubuntu:22.04 AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \

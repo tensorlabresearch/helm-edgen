@@ -6,7 +6,7 @@ Helm chart wrapper for the [Edgen project](https://github.com/edgenai/edgen), ma
 
 - OCI chart (primary): `oci://ghcr.io/tensorlabresearch/charts/edgen`
 - GitHub Pages chart repo (mirror): `https://tensorlabresearch.github.io/helm-edgen`
-- Container image: `docker.io/mechaminds/edgen`
+- Container image: `ghcr.io/tensorlabresearch/edgen`
 
 ## Install
 
@@ -14,7 +14,7 @@ Helm chart wrapper for the [Edgen project](https://github.com/edgenai/edgen), ma
 
 ```bash
 helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
-  --version 0.1.2
+  --version 0.1.3
 ```
 
 ### From GitHub Pages index
@@ -22,7 +22,7 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 ```bash
 helm repo add tensorlab-edgen https://tensorlabresearch.github.io/helm-edgen
 helm repo update
-helm install edgen tensorlab-edgen/edgen --version 0.1.2
+helm install edgen tensorlab-edgen/edgen --version 0.1.3
 ```
 
 ## Quickstart Values
@@ -50,7 +50,7 @@ Install with:
 
 ```bash
 helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
-  --version 0.1.2 \
+  --version 0.1.3 \
   -f values-preload.yaml
 ```
 
@@ -63,7 +63,7 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 
 ## Release model
 
-- Push a semver Git tag like `v0.1.0` to build/publish the CUDA image to Docker Hub.
+- Push a semver Git tag like `v0.1.0` to build/publish the image to GHCR.
 - Merge chart changes to `main` with bumped `charts/edgen/Chart.yaml` version.
 - `chart-release.yml` will lint/template, publish index/releases to `gh-pages`, and push changed chart packages to GHCR OCI.
 
