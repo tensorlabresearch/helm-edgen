@@ -11,6 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libglib2.0-dev \
     libgtk-3-dev \
+    libsoup2.4-dev \
+    libwebkit2gtk-4.0-dev \
+    libayatana-appindicator3-dev \
+    librsvg2-dev \
+    libxdo-dev \
     libssl-dev \
     clang \
     git \
