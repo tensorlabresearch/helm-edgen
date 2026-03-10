@@ -70,6 +70,8 @@ jobs:
         with:
           charts_dir: charts
           skip_existing: true
+          skip_packaging: false
+          skip_upload: false
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 

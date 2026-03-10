@@ -16,3 +16,4 @@ sources:
   - https://github.com/tensorlabresearch/helm-edgen
 maintainers:
   - name: tensorlabresearch
+icon: https://raw.githubusercontent.com/cncf/artwork/main/projects/helm/icon/color/helm-icon-color.png
