@@ -40,6 +40,10 @@ jobs:
           tags: |
             ghcr.io/tensorlabresearch/edgen:${{ github.ref_name }}
             ghcr.io/tensorlabresearch/edgen:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.title=edgen
 
       - name: Ensure GHCR image package is public
         if: steps.build.outcome == 'success'
