@@ -14,7 +14,7 @@ Helm chart wrapper for the [Edgen project](https://github.com/edgenai/edgen), ma
 
 ```bash
 helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
-  --version 0.1.1
+  --version 0.1.2
 ```
 
 ### From GitHub Pages index
@@ -22,7 +22,7 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 ```bash
 helm repo add tensorlab-edgen https://tensorlabresearch.github.io/helm-edgen
 helm repo update
-helm install edgen tensorlab-edgen/edgen --version 0.1.1
+helm install edgen tensorlab-edgen/edgen --version 0.1.2
 ```
 
 ## Quickstart Values
@@ -50,7 +50,7 @@ Install with:
 
 ```bash
 helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
-  --version 0.1.1 \
+  --version 0.1.2 \
   -f values-preload.yaml
 ```
 
