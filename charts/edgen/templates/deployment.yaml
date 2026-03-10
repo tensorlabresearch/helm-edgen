@@ -1,0 +1,202 @@
+{{- $resources := deepCopy (default (dict) .Values.resources) -}}
+{{- if not (hasKey $resources "requests") -}}{{- $_ := set $resources "requests" (dict) -}}{{- end -}}
+{{- if not (hasKey $resources "limits") -}}{{- $_ := set $resources "limits" (dict) -}}{{- end -}}
+{{- if .Values.gpu.enabled -}}
+{{- $_ := set $resources.requests .Values.gpu.resourceKey .Values.gpu.count -}}
+{{- $_ := set $resources.limits .Values.gpu.resourceKey .Values.gpu.count -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "edgen.fullname" . }}
+  labels:
+    {{- include "edgen.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "edgen.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "edgen.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "edgen.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if and .Values.modelPreload.enabled (gt (len .Values.modelPreload.items) 0) }}
+      initContainers:
+        - name: preload-models
+          image: "{{ .Values.modelPreload.image.repository }}:{{ .Values.modelPreload.image.tag }}"
+          imagePullPolicy: {{ .Values.modelPreload.image.pullPolicy }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              set -eu
+
+              CONTINUE_ON_ERROR="{{ ternary "true" "false" .Values.modelPreload.continueOnError }}"
+
+              ensure_deps() {
+                if ! command -v curl >/dev/null 2>&1; then
+                  echo "curl not present; installing runtime deps"
+                  apk add --no-cache curl coreutils >/dev/null
+                fi
+              }
+
+              download_model() {
+                item_id="$1"
+                item_url="$2"
+                item_subdir="$3"
+                item_filename="$4"
+                item_sha="$5"
+
+                target_dir="{{ .Values.persistence.models.mountPath }}/$item_subdir"
+                target_file="$target_dir/$item_filename"
+                tmp_file="$target_file.part"
+
+                mkdir -p "$target_dir"
+
+                if [ -f "$target_file" ]; then
+                  echo "[$item_id] exists: $target_file"
+                  return 0
+                fi
+
+                echo "[$item_id] downloading $item_url"
+                curl -fsSL --retry 5 --retry-all-errors "$item_url" -o "$tmp_file"
+
+                if [ -n "$item_sha" ]; then
+                  echo "[$item_id] verifying sha256"
+                  echo "$item_sha  $tmp_file" | sha256sum -c -
+                fi
+
+                mv "$tmp_file" "$target_file"
+                echo "[$item_id] ready: $target_file"
+              }
+
+              run_download() {
+                if download_model "$1" "$2" "$3" "$4" "$5"; then
+                  return 0
+                fi
+
+                if [ "$CONTINUE_ON_ERROR" = "true" ]; then
+                  echo "[warn] preload failed for $1; continuing"
+                  return 0
+                fi
+
+                echo "[error] preload failed for $1"
+                exit 1
+              }
+
+              ensure_deps
+
+              {{- range .Values.modelPreload.items }}
+              run_download {{ .id | quote }} {{ .url | quote }} {{ .targetSubdir | quote }} {{ .filename | quote }} {{ .sha256 | quote }}
+              {{- end }}
+          volumeMounts:
+            - name: models
+              mountPath: {{ .Values.persistence.models.mountPath }}
+      {{- end }}
+      containers:
+        - name: edgen
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          command: ["/usr/local/bin/edgen"]
+          args:
+            - "serve"
+            - "-g"
+            - "-b"
+            - {{ .Values.edgen.listenUri | quote }}
+            {{- range .Values.edgen.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          env:
+            - name: RUST_LOG
+              value: {{ .Values.edgen.logLevel | quote }}
+            - name: XDG_CONFIG_HOME
+              value: /config
+            - name: XDG_DATA_HOME
+              value: {{ .Values.persistence.models.mountPath | quote }}
+            - name: HOME
+              value: /home/app
+            {{- range .Values.edgen.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          startupProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          resources:
+            {{- toYaml $resources | nindent 12 }}
+          volumeMounts:
+            - name: models
+              mountPath: {{ .Values.persistence.models.mountPath }}
+              readOnly: {{ .Values.persistence.models.readOnly }}
+            - name: edgen-config
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: models
+          {{- if and .Values.persistence.models.enabled (not .Values.persistence.models.existingClaim) }}
+          persistentVolumeClaim:
+            claimName: {{ include "edgen.fullname" . }}-models
+          {{- else if .Values.persistence.models.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.models.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: edgen-config
+          configMap:
+            name: {{ include "edgen.fullname" . }}-config
+            items:
+              - key: edgen.conf.yaml
+                path: edgenai/edgen/edgen.conf.yaml
+              - key: edgen.conf.yaml
+                path: edgen/edgen.conf.yaml
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

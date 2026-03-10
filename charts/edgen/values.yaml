@@ -1,0 +1,114 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/tensorlabresearch/edgen
+  tag: "v0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+containerSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+
+service:
+  type: ClusterIP
+  port: 33322
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: "4"
+    memory: 16Gi
+
+gpu:
+  enabled: true
+  count: 1
+  resourceKey: nvidia.com/gpu
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+persistence:
+  models:
+    enabled: true
+    existingClaim: ""
+    size: 50Gi
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    mountPath: /models
+    readOnly: false
+
+modelPreload:
+  enabled: true
+  continueOnError: false
+  image:
+    repository: alpine
+    tag: "3.20"
+    pullPolicy: IfNotPresent
+  items: []
+
+edgen:
+  listenUri: http://0.0.0.0:33322
+  logLevel: info
+  extraArgs: []
+  env: []
+  config:
+    threads: 8
+    defaultUri: http://0.0.0.0:33322
+    maxRequestSize: 104857600
+    gpuPolicy:
+      mode: always_device
+      overflowToCpu: true
+      overflowToDevice: false
+    modelDirs:
+      chat: /models/edgen/chat/completions
+      audio: /models/edgen/audio/transcriptions
+      embeddings: /models/edgen/embeddings
+      imageGeneration: /models/edgen/image/generation
+    chat:
+      modelName: neural-chat-7b-v3-3.Q4_K_M.gguf
+      modelRepo: TheBloke/neural-chat-7B-v3-3-GGUF
+    audio:
+      modelName: ggml-distil-small.en.bin
+      modelRepo: distil-whisper/distil-small.en
+    embeddings:
+      modelName: nomic-embed-text-v1.5.f16.gguf
+      modelRepo: nomic-ai/nomic-embed-text-v1.5-GGUF
+
+probes:
+  startup:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 60
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 6

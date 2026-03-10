@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "edgen.fullname" . }}-test-connection"
+  labels:
+    {{- include "edgen.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox:1.36
+      command: ['sh', '-c']
+      args:
+        - wget -qO- http://{{ include "edgen.fullname" . }}:{{ .Values.service.port }}/v1/models
+  restartPolicy: Never

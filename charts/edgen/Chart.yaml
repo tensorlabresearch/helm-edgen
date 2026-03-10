@@ -1,0 +1,18 @@
+apiVersion: v2
+name: edgen
+description: CUDA-first Helm chart for Edgen OpenAI-compatible local AI server with model preloading
+home: https://github.com/tensorlabresearch/helm-edgen
+type: application
+version: 0.1.0
+appVersion: "v0.1.0"
+keywords:
+  - edgen
+  - openai
+  - stt
+  - llm
+  - cuda
+sources:
+  - https://github.com/edgenai/edgen
+  - https://github.com/tensorlabresearch/helm-edgen
+maintainers:
+  - name: tensorlabresearch

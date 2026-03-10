@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["image", "gpu", "persistence", "modelPreload", "edgen"],
+  "properties": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "minLength": 1 },
+        "pullPolicy": { "type": "string" }
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "required": ["enabled", "count", "resourceKey"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "count": { "type": ["integer", "string"] },
+        "resourceKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "required": ["models"],
+      "properties": {
+        "models": {
+          "type": "object",
+          "required": ["enabled", "size", "storageClass"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "existingClaim": { "type": "string" },
+            "size": { "type": "string", "minLength": 1 },
+            "storageClass": { "type": "string" },
+            "accessModes": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "mountPath": { "type": "string", "minLength": 1 },
+            "readOnly": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "modelPreload": {
+      "type": "object",
+      "required": ["enabled", "continueOnError", "items"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "continueOnError": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "url", "filename", "targetSubdir", "sha256"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "url": { "type": "string", "minLength": 1 },
+              "filename": { "type": "string", "minLength": 1 },
+              "targetSubdir": { "type": "string" },
+              "sha256": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "edgen": {
+      "type": "object",
+      "required": ["config"],
+      "properties": {
+        "listenUri": { "type": "string", "minLength": 1 },
+        "config": {
+          "type": "object",
+          "required": ["chat", "audio", "embeddings"],
+          "properties": {
+            "chat": {
+              "type": "object",
+              "required": ["modelName", "modelRepo"],
+              "properties": {
+                "modelName": { "type": "string", "minLength": 1 },
+                "modelRepo": { "type": "string", "minLength": 1 }
+              }
+            },
+            "audio": {
+              "type": "object",
+              "required": ["modelName", "modelRepo"],
+              "properties": {
+                "modelName": { "type": "string", "minLength": 1 },
+                "modelRepo": { "type": "string", "minLength": 1 }
+              }
+            },
+            "embeddings": {
+              "type": "object",
+              "required": ["modelName", "modelRepo"],
+              "properties": {
+                "modelName": { "type": "string", "minLength": 1 },
+                "modelRepo": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

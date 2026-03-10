@@ -1,0 +1,17 @@
+{{- if and .Values.persistence.models.enabled (not .Values.persistence.models.existingClaim) -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "edgen.fullname" . }}-models
+  labels:
+    {{- include "edgen.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.models.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.models.size }}
+  {{- if .Values.persistence.models.storageClass }}
+  storageClassName: {{ .Values.persistence.models.storageClass }}
+  {{- end }}
+{{- end }}

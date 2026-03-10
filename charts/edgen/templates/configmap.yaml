@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "edgen.fullname" . }}-config
+  labels:
+    {{- include "edgen.labels" . | nindent 4 }}
+data:
+  edgen.conf.yaml: |
+    threads: {{ .Values.edgen.config.threads }}
+    default_uri: {{ .Values.edgen.config.defaultUri | quote }}
+    chat_completions_models_dir: {{ .Values.edgen.config.modelDirs.chat | quote }}
+    chat_completions_model_name: {{ .Values.edgen.config.chat.modelName | quote }}
+    chat_completions_model_repo: {{ .Values.edgen.config.chat.modelRepo | quote }}
+    audio_transcriptions_models_dir: {{ .Values.edgen.config.modelDirs.audio | quote }}
+    audio_transcriptions_model_name: {{ .Values.edgen.config.audio.modelName | quote }}
+    audio_transcriptions_model_repo: {{ .Values.edgen.config.audio.modelRepo | quote }}
+    embeddings_models_dir: {{ .Values.edgen.config.modelDirs.embeddings | quote }}
+    embeddings_model_name: {{ .Values.edgen.config.embeddings.modelName | quote }}
+    embeddings_model_repo: {{ .Values.edgen.config.embeddings.modelRepo | quote }}
+    image_generation_models_dir: {{ .Values.edgen.config.modelDirs.imageGeneration | quote }}
+    {{- if eq .Values.edgen.config.gpuPolicy.mode "always_cpu" }}
+    gpu_policy: !always_cpu
+      overflow_to_device: {{ .Values.edgen.config.gpuPolicy.overflowToDevice }}
+    {{- else }}
+    gpu_policy: !always_device
+      overflow_to_cpu: {{ .Values.edgen.config.gpuPolicy.overflowToCpu }}
+    {{- end }}
+    max_request_size: {{ .Values.edgen.config.maxRequestSize }}
