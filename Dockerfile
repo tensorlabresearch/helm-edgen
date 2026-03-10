@@ -23,23 +23,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 WORKDIR /src
 
 RUN git clone --depth 1 https://github.com/edgenai/edgen.git .
-RUN mkdir -p /tmp/edgen-launcher/src \
-    && cat > /tmp/edgen-launcher/Cargo.toml <<'EOF'
-[package]
-name = "edgen-launcher"
-version = "0.1.0"
-edition = "2021"
-
-[[bin]]
-name = "edgen"
-path = "src/main.rs"
-
-[dependencies]
-once_cell = "1.21.3"
-edgen_server = { path = "/src/crates/edgen_server", features = ["llama_cuda", "whisper_cuda"] }
-EOF
-
-RUN cat > /tmp/edgen-launcher/src/main.rs <<'EOF'
+RUN cat > /src/crates/edgen_server/src/bin/edgen.rs <<'EOF'
 use once_cell::sync::Lazy;
 use edgen_server::{cli, start, EdgenResult};
 
@@ -49,7 +33,8 @@ fn main() -> EdgenResult {
 }
 EOF
 
-RUN cargo +"${RUST_VERSION}" build --manifest-path /tmp/edgen-launcher/Cargo.toml --release --bin edgen
+RUN cargo +"${RUST_VERSION}" build --manifest-path /src/Cargo.toml --release \
+    -p edgen_server --bin edgen --features llama_cuda,whisper_cuda --locked
 
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS runtime
 
@@ -62,7 +47,7 @@ RUN useradd --create-home app \
     && mkdir -p /config /models /home/app \
     && chown -R app:app /config /models /home/app
 
-COPY --from=builder /tmp/edgen-launcher/target/release/edgen /usr/local/bin/edgen
+COPY --from=builder /src/target/release/edgen /usr/local/bin/edgen
 
 USER app
 WORKDIR /home/app
