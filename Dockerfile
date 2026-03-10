@@ -2,7 +2,7 @@
 
 FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS builder
 
-ARG RUST_VERSION=1.88.0
+ARG EDGEN_REF=main
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -17,12 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-    | sh -s -- -y --default-toolchain "${RUST_VERSION}" --profile minimal
+    | sh -s -- -y --default-toolchain stable --profile minimal
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 WORKDIR /src
 
-RUN git clone --depth 1 https://github.com/edgenai/edgen.git .
+RUN git clone --depth 1 --branch "${EDGEN_REF}" https://github.com/edgenai/edgen.git .
 RUN cat > /src/crates/edgen_server/src/bin/edgen.rs <<'EOF'
 use once_cell::sync::Lazy;
 use edgen_server::{cli, start, EdgenResult};
@@ -33,8 +33,11 @@ fn main() -> EdgenResult {
 }
 EOF
 
-RUN cargo build --manifest-path /src/Cargo.toml --release \
-    -p edgen_server --bin edgen --features llama_cuda,whisper_cuda --locked
+RUN EDGEN_TOOLCHAIN="$(awk -F'\"' '/^channel = / { print $2; exit }' rust-toolchain.toml)" \
+    && test -n "${EDGEN_TOOLCHAIN}" \
+    && rustup toolchain install "${EDGEN_TOOLCHAIN}" --profile minimal \
+    && cargo +"${EDGEN_TOOLCHAIN}" build --manifest-path /src/Cargo.toml --release \
+        -p edgen_server --bin edgen --features llama_cuda,whisper_cuda --locked
 
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS runtime
 
