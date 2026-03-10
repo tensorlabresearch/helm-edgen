@@ -43,15 +43,16 @@ jobs:
 
       - name: Ensure GHCR image package is public
         if: steps.build.outcome == 'success'
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh api \
+          if ! gh api \
             --method PATCH \
             -H "Accept: application/vnd.github+json" \
             /orgs/tensorlabresearch/packages/container/edgen/visibility \
-            -f visibility=public
+            -f visibility=public; then
+            echo "Skipping image package visibility update; configure package visibility manually in GHCR."
+          fi
 
       - name: Scan image (Trivy)
         id: trivy

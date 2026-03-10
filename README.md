@@ -72,3 +72,4 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 - Default chart values assume CUDA and request `nvidia.com/gpu: 1`.
 - Chart renders `edgen.conf.yaml` from values and mounts it in the container.
 - Model files can be preloaded via init container and/or auto-downloaded by Edgen at runtime.
+- If OCI pulls return `403`, set GHCR package visibility to public for `edgen` and `charts/edgen` in the `tensorlabresearch` org packages settings.
