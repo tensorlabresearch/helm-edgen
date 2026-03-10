@@ -22,7 +22,7 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Helm lint
-        run: helm lint charts/edgen
+        run: helm lint --strict charts/edgen
 
       - name: Helm template (default values)
         run: helm template edgen charts/edgen > /tmp/edgen-default.yaml
@@ -43,6 +43,13 @@ jobs:
                 sha256: ""
           YAML
           helm template edgen charts/edgen -f /tmp/edgen-preload-values.yaml > /tmp/edgen-preload.yaml
+
+      - name: Validate rendered preload and GPU manifests
+        run: |
+          grep -q "initContainers:" /tmp/edgen-preload.yaml
+          grep -q "sha256sum -c -" /tmp/edgen-preload.yaml
+          grep -q "nvidia.com/gpu" /tmp/edgen-default.yaml
+          grep -q "edgen.conf.yaml" /tmp/edgen-default.yaml
 
   release:
     runs-on: ubuntu-latest

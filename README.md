@@ -25,6 +25,42 @@ helm repo update
 helm install edgen tensorlab-edgen/edgen --version 0.1.0
 ```
 
+## Quickstart Values
+
+Create a values override to preload extra models into the chart-managed models PVC:
+
+```yaml
+gpu:
+  enabled: true
+  count: 1
+  resourceKey: nvidia.com/gpu
+
+modelPreload:
+  enabled: true
+  continueOnError: false
+  items:
+    - id: custom-chat-gguf
+      url: https://example.com/models/chat.gguf
+      filename: chat.gguf
+      targetSubdir: edgen/chat/completions
+      sha256: ""
+```
+
+Install with:
+
+```bash
+helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
+  --version 0.1.0 \
+  -f values-preload.yaml
+```
+
+## Argo CD Examples
+
+- Pages chart repo app: `examples/argocd/pages-application.yaml`
+- OCI chart repo app:
+  - repository secret: `examples/argocd/oci-repository-secret.yaml`
+  - application: `examples/argocd/oci-application.yaml`
+
 ## Release model
 
 - Push a semver Git tag like `v0.1.0` to build/publish the CUDA image to GHCR.
