@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://tensorlabresearch.github.io/helm-edgen
     chart: edgen
-    targetRevision: 0.1.0
+    targetRevision: 0.1.1
     helm:
       values: |
         gpu:

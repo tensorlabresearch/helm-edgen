@@ -14,7 +14,7 @@ Helm chart and CUDA image pipeline for Edgen in the `tensorlabresearch` organiza
 
 ```bash
 helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
-  --version 0.1.0
+  --version 0.1.1
 ```
 
 ### From GitHub Pages index
@@ -22,7 +22,7 @@ helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
 ```bash
 helm repo add tensorlab-edgen https://tensorlabresearch.github.io/helm-edgen
 helm repo update
-helm install edgen tensorlab-edgen/edgen --version 0.1.0
+helm install edgen tensorlab-edgen/edgen --version 0.1.1
 ```
 
 ## Quickstart Values
@@ -50,7 +50,7 @@ Install with:
 
 ```bash
 helm install edgen oci://ghcr.io/tensorlabresearch/charts/edgen \
-  --version 0.1.0 \
+  --version 0.1.1 \
   -f values-preload.yaml
 ```
 
